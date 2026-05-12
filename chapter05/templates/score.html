@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能语音记分系统</title>
+    <script src="/static/script.js"></script>
+    <script src="/static/RecordRTC.js"></script>
+    <link rel="stylesheet" href="/static/style.css" type="text/css"></link>
+</head>
+<body>
+    <div class="top">
+        <div class="name">
+            <div>红队( <span id="red_total">0</span> )</div>
+            <div>两队得分记录</div>
+            <div>蓝队( <span id="blue_total">0</span> )</div>
+        </div>
+        <div class="middle">
+            <div>
+                <button onclick="red_plus(1)">+</button><br/>
+                <input value="0" id="red_sub"/><br/>
+                <button onclick="red_minus(1)">-</button>
+            </div>
+            <div>
+                <textarea id="score_log"></textarea>
+            </div>
+            <div>
+                <button onclick="blue_plus(1)">+</button><br/>
+                <input value="0" id="blue_sub"/><br/>
+                <button onclick="blue_minus(1)">-</button>
+            </div>
+        </div>
+        <div class="bottom">
+            <button onclick="doStop()">结束本局</button>
+            <button onclick="doStart()">开始本局</button>
+            <button onclick="doUndo()">撤消得分</button>
+        </div>
+    </div>
+</body>
+</html>

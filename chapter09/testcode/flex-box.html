@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弹性布局基础</title>
+    <style>
+        #box {
+            width: 100%;
+            height: 300px;
+            display: flex;            /*设置为弹性布局*/
+            flex-direction: row;    /*主轴方向为水平方向*/
+            flex-wrap: nowrap;       /*弹性项目不换行*/
+            justify-content: center; /*在主轴上弹性项目进行居中*/
+            align-items: center;     /*在侧轴上弹性项目进行居中*/
+            background-color: lightblue;
+        }
+        #box div {
+            width: 100px;
+            height: 100px;
+            background-color: lightcoral;
+            text-align: center;
+            line-height: 100px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="box">
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+    </div>
+</body>
+</html>

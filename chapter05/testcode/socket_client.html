@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket客户端</title>
+    <script>
+        // 定义Socket全局变量
+        let socket = null;
+
+        function doConnect() {
+            socket = new WebSocket("ws://localhost:8765");
+
+            // 使用匿名函数，绑定open事件，表示连接建立时的操作
+            socket.onopen = function () {
+                document.getElementById("status").textContent = "成功";
+            }
+
+            // 也可以使用箭头函数，绑定error事件，表示出错时的操作
+            socket.onerror = () => {
+                document.getElementById("status").textContent = "失败";
+            }
+        }
+
+        function doClose() {
+            // 关闭连接必须给定状态码1000，或3000~4999
+            socket.close(1000, "Done");
+            // 响应关闭事件时的处理代码
+            socket.onclose = function () {
+                document.getElementById("status").textContent = "关闭";
+            }
+        }
+
+        function doSend() {
+            // 发送消息给后端接口
+            let content = document.getElementById("content").value;
+            socket.send(content);
+            // 响应服务器端发送消息的事件代码
+            socket.onmessage = (event) => {
+                document.getElementById("reply").value = event.data;
+            }
+        }
+    </script>
+</head>
+<body>
+连接状态：<span id="status"></span><br/>
+发送内容：<input type="text" id="content" value="你好"/><br/>
+回复内容：<input type="text" id="reply"/><br/>
+<button onclick="doConnect()">连接</button>&nbsp;&nbsp;
+<button onclick="doSend()">发送</button>&nbsp;&nbsp;
+<button onclick="doClose()">关闭</button>
+</body>
+</html>

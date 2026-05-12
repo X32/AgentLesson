@@ -1,0 +1,96 @@
+<!--每500毫秒自动截图，并进行人脸检测和位置标注-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人脸检测与标注</title>
+    <script>
+    // 当页面元素加载完成后执行以下代码，由于是全自动执行，所以不需要响应任何按钮事件
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取到视频预览的video元素，该操作只能在页面就绪事件后可用
+        // 有些代码也可以将JS代码放到Body里面，元素定义之后，也是类似的目的
+        const preview = document.getElementById('preview');
+
+        let ws = new WebSocket('ws://localhost:8765');
+
+        // 此处为了简化代码，只定义WebSocket的onopen和onmessage事件
+        ws.onopen = function () {
+            doStart();     // 调用doStart函数开始视频渲染
+        };
+
+        // 处理来自后端的人脸位置坐标
+        ws.onmessage = (event) => {
+            // 先删除上一次的位置标注的所有DIV元素
+            let rectDivs = document.getElementsByClassName("rectDiv");
+            if (rectDivs.length > 0) {
+                for (let i=0; i<rectDivs.length; i++) {
+                    rectDivs[i].remove();
+                }
+            }
+
+            const locations = JSON.parse(event.data);
+            // 获取video元素当前在页面中的左上角坐标原点的位置
+            let left = preview.offsetLeft;
+            let top = preview.offsetTop;
+
+            // 遍历每张人脸，并创建DIV进行位置标注
+            for (let index in locations) {
+                // 为每个人脸新建一个DIV用于位置标注
+                let rect = document.createElement("div");
+                rect.className = "rectDiv";
+                rect.style.width = locations[index]['width'] + "px";
+                rect.style.height = locations[index]['height'] + "px";
+                rect.style.position = "fixed";   // 固定定位
+                rect.style.border = "solid 1px red";
+                rect.style.left = locations[index]['x'] + left + "px";
+                rect.style.top = locations[index]['y'] + top + "px";
+                // rect.style.zIndex = "10000";
+                document.body.appendChild(rect);
+            }
+        }
+
+        async function doStart() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    width: {ideal: 960},
+                    height: {ideal: 540}
+                }
+            });
+            preview.srcObject = stream;
+
+            mediaRecorder = new MediaRecorder(stream, {mimeType: 'video/mp4'});
+            mediaRecorder.start(200);
+
+            // 调用定时任务，每500毫秒一次循环截图
+            setInterval(doCapture, 500);
+        }
+
+        function doCapture() {
+            // 创建canvas元素
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // 设置canvas尺寸与视频相同
+            canvas.width = preview.videoWidth;
+            canvas.height = preview.videoHeight;
+
+            // 将视频帧绘制到canvas上
+            context.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+            // 提取Canvas上的当前帧的二进制数据并发送给WebSocket
+            canvas.toBlob(function (blob) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(blob);   // 将截图发送给WebSocket服务器
+                }
+            }, 'image/jpeg', 0.8);
+        }
+    });
+    </script>
+</head>
+<body>
+    <div id="main" style="border: solid 1px red; width: 962px; height: 542px; margin: auto">
+        <video id="preview" autoplay muted width="960" height="540"></video>
+    </div>
+</body>
+</html>

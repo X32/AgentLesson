@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="width: 300px; height: 520px; border: solid 2px red;
+    text-align: center; padding: 20px; line-height: 40px">
+    {#
+    这是模板引擎的注释，不会被模板引擎解析，{{count}}并不会在此输出
+    同时，该注释也不会被渲染到前端，模板引擎响应给前端的时候直接会将些注释删除
+    #}
+
+    <!-- 模板引擎会解析处理HTML注释，但只要没有模板语法，则可以正常使用
+     这是HTML的标准注释语法，模板引擎不会删除，会原样将注释响应给前端
+    -->
+    <span>变量count的值为：{{count}}</span><br/>
+
+    <!-- 模板引擎的if...else...语句 -->
+
+    {% if count % 2 == 0 %}
+    <span>count可以被2整除，是一个偶数</span><br/>
+    {% else %}
+    <span>count不能被2整除，是一个奇数</span><br/>
+    {% endif %}
+
+    {# 模板引擎的for ... in ... 循环语句，如果是列表，也同样可以 for item in list #}
+
+    {% set loop = count / 10 %}    {# 为loop变量设置值为count/10 = 10 #}
+    {% set intloop = loop | int %}   {# 利用过滤器转换loop的变量值为整数 #}
+
+    {% for i in range(1, intloop+1) %}    {# 正常循环，语法与Python一致 #}
+    <span>当前循环到第{{i}}行</span><br/>
+    {% endfor %}
+
+    {% set user = get_user() %}
+    用户名为：{{user.username | upper}}， 密码为：{{user.password}}
+</div>
+</body>
+</html>

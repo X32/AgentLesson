@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>前端实时语音识别</title>
+    <script src="/static/RecordRTC.js"></script>
+    <script>
+
+        let socket = null;
+        let recorder = null;   // 设置全局变量
+
+        function doStart() {
+            socket = new WebSocket("ws://localhost:8765");
+
+            // 使用匿名函数，绑定open事件，表示连接建立时的操作
+            socket.onopen = function () {
+                console.log("成功");
+            }
+
+            // 也可以使用箭头函数，绑定error事件，表示出错时的操作
+            socket.onerror = (error) => {
+                console.log(error);
+            }
+
+            // 标准JS接口获取浏览器权限
+            navigator.mediaDevices.getUserMedia({
+                video: false,
+                audio: true
+            }).then(async function (stream) {
+                // 实例化RecordRTC并设置参数
+                recorder = new RecordRTC(stream, {
+                    type: 'audio',     // 录音为音频
+                    mimeType: 'audio/wav',   // 设置wav格式
+                    recorderType: RecordRTC.StereoAudioRecorder,  // 录音类型
+                    timeSlice: 500,   // 每250毫秒提交一次数据
+                    sampleRate: 48000,   // 抽样频率，48K清晰度较好，但是文件稍大
+                    desiredSampRate: 16000,
+                    numberOfAudioChannels: 1,   // 单通道录制，减少文件大小
+                    ondataavailable: (blob) => {
+                        socket.send(blob);
+                    }
+                });
+
+                recorder.startRecording();    // 开始录制
+            });
+
+            socket.onmessage = (event) => {
+                document.getElementById("content").textContent += event.data;
+            }
+        }
+
+        // 结束录制
+        function doClose() {
+            socket.close(1000, "Done");
+            recorder.stopRecording(function() {
+                console.log("done")
+            });
+        }
+    </script>
+</head>
+<body>
+    识别内容：<span id="content"></span><br/>
+    <button onclick="doStart()">开始录音</button>
+    <button onclick="doClose()">结束录音</button>
+</body>
+</html>

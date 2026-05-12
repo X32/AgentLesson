@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上传人脸并关联</title>
+    <style>
+      table {
+        width: 1000px;
+        margin: auto;
+        border: solid 1px gray;
+        border-spacing: 0px;
+      }
+      thead{
+        font-weight: bold;
+        height: 40px;
+        background-color: lightseagreen;
+      }
+      td {
+        border: solid 1px gray;
+        text-align: center;
+        height: 35px;
+      }
+    </style>
+
+    <script>
+      // 点击浏览图片按钮时触发同级的文件上传框进行点击
+      // 此处形参obj对应的实参为this,表示该元素本身，浏览图片按钮触发该函数，则obj代表该按钮
+      function browseImage(obj) {
+        // 获取该元素的上级父元素（div)的第一个子元素（input)，模拟文件上传框点击
+        // obj.parentNode.children[0].click();
+        // 也可以使用querySelector('input')进行相对明确的查找
+        obj.parentNode.querySelector("input").click();
+      }
+
+      // 当浏览图片成功后，隐藏浏览图片按钮，并显示文件名以供确认
+      function doChange(obj) {
+        // 读取到文件名
+        let filename = obj.parentNode.querySelector("input").files[0].name;
+        // 将浏览图片按钮隐藏，并显示文件名，以供确认，如果不正确可刷新重来
+        obj.parentNode.querySelectorAll("button")[0].style.display = "none";
+        obj.parentNode.querySelector("span").textContent = filename;
+      }
+
+      // 正式上传人脸图片，参数userid由模板引擎填充，以确保关联正确
+      function doAdd(obj, userid) {
+        let faceimage = obj.parentNode.querySelector("input");
+
+        // 由于是userid与文件上传同时提交，此处必须使用FormData才可以操作
+        let formData = new FormData();
+        formData.append("userid", userid);
+        formData.append("file", faceimage.files[0]);
+        fetch('/face/add', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+          if (data.includes("Face-Added")) {
+            alert("新增人脸信息成功");
+            location.reload();   // 刷新当前页面
+          }
+          else if (data.includes("Face-Not-Exist"))
+            alert("图片中未包含有效的人脸信息")
+        })
+        .catch(err => console.log('请求失败', err));
+      }
+    </script>
+</head>
+<body>
+  <!--利用表格显示所有人员信息，并在右侧添加按钮进行人脸上传操作-->
+  <table>
+    <thead>
+      <tr>
+        <td width="15%">编号</td>
+        <td width="15%">姓名</td>
+        <td width="15%">性别</td>
+        <td width="15%">部门</td>
+        <td width="15%">人脸状态</td>
+        <td width="25%">操作</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td>{{result.Users.userid}}</td>
+        <td>{{result.Users.username}}</td>
+        <td>{{result.Users.usersex}}</td>
+        <td>{{result.Users.department}}</td>
+        <td>{% if result.facecode == None %} 未录入 {% else %} 已录入 {% endif %}</td>
+        <td>
+          <input type="file" onchange="doChange(this)" style="display: none" />
+          <span></span>
+          <button onclick="browseImage(this)">浏览图片</button>&nbsp;&nbsp;
+          <button onclick="doAdd(this, {{result.Users.userid}})">上传人脸</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

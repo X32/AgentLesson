@@ -1,0 +1,187 @@
+<!--每500毫秒自动截图，并进行人脸检测和位置标注-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人脸检测与标注</title>
+    <style>
+      table {
+        width: 964px;
+        margin: 20px auto;
+        border: solid 1px gray;
+        border-spacing: 0px;
+      }
+      thead{
+        font-weight: bold;
+        height: 40px;
+        background-color: lightseagreen;
+      }
+      td {
+        border: solid 1px gray;
+        text-align: center;
+        height: 35px;
+      }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const preview = document.getElementById('preview');
+        const synth = window.speechSynthesis;   // 本地语音合成对象
+
+        // 添加语音播报函数
+        function doSpeak(content) {
+            let utterance = new SpeechSynthesisUtterance(content);
+            synth.cancel();
+            synth.speak(utterance);
+        }
+
+        let ws = new WebSocket('ws://localhost:8765');
+
+        ws.onopen = function () {
+            doStart();     // 调用doStart函数开始视频渲染
+        };
+
+        // 处理来自后端的人脸位置坐标
+        ws.onmessage = (event) => {
+            // 先删除上一次的位置标注的DIV元素
+            let rectDiv = document.getElementById("rectDiv");
+            if (rectDiv)
+                rectDiv.remove();
+
+            // 后端响应的可能是一个人脸位置，也可能是一个考勤成功的消息
+            const data = JSON.parse(event.data);
+
+            // 此时为一个考勤成功的消息体：{"result": "Checkin-OK"}
+            if ("result" in data) {
+                if (data['result'] == "Checkin-OK") {
+                    doSpeak("考勤成功");
+                    location.reload();   // 考勤成功刷新当前页面
+                }
+                else if (data['result'] == "Checkin-Repeated") {
+                    doSpeak("请勿重复考勤");
+                }
+                else if (data['result'] == "Checkin-NOK") {
+                    doSpeak("考勤失败");
+                }
+            }
+            // 此时响应的是人脸坐标
+            else if ("width" in data) {
+                // 获取video元素当前在页面中的左上角坐标原点的位置
+                let left = preview.offsetLeft;
+                let top = preview.offsetTop;
+
+                let rect = document.createElement("div");
+                rect.id = "rectDiv";
+                rect.style.width = data['width'] + "px";
+                rect.style.height = data['height'] + "px";
+                rect.style.position = "fixed";
+                rect.style.border = "solid 1px red";
+                rect.style.left = data['x'] + left + "px";
+                rect.style.top = data['y'] + top + "px";
+                document.body.appendChild(rect);
+            }
+        }
+
+        async function doStart() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    width: {ideal: 960},
+                    height: {ideal: 540}
+                }
+            });
+            preview.srcObject = stream;
+
+            mediaRecorder = new MediaRecorder(stream, {mimeType: 'video/mp4'});
+            mediaRecorder.start(200);
+
+            // 调用定时任务，每500毫秒一次循环截图
+            setInterval(doCapture, 500);
+        }
+
+        function doCapture() {
+            // 创建canvas元素
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // 设置canvas尺寸与视频相同
+            canvas.width = preview.videoWidth;
+            canvas.height = preview.videoHeight;
+
+            // 将视频帧绘制到canvas上
+            context.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+            // 提取Canvas上的当前帧的二进制数据并发送给WebSocket
+            canvas.toBlob(function (blob) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(blob);   // 将截图发送给WebSocket服务器
+                }
+            }, 'image/jpeg', 0.8);
+        }
+
+        // function fetch_data() {
+        //     fetch('/check/today', {
+        //     method: 'GET'
+        // })
+        // .then(response => response.json())
+        // .then(datas => {
+        //     let check_data = document.getElementById("check_data");
+        //     // 先清空上一次请求填充的数据
+        //     tbody_html = "";
+        //     // 再遍历所有数据并进行填充
+        //     for (let i in datas) {
+        //         tbody_html += "<tr>";
+        //         tbody_html += "<td>" + datas[i]['Users']['userid'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Users']['username'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Users']['usersex'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Users']['department'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Checks']['checkdate'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Checks']['checkstart'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Checks']['checkend'] + "</td>";
+        //         tbody_html += "<td>" + datas[i]['Checks']['hours'] + "</td>";
+        //         tbody_html += "</tr>";
+        //     }
+        //     check_data.innerHTML = tbody_html;
+        // })
+        // .catch(err => console.log('请求失败', err));
+        // }
+        //
+        //  fetch_data();  // 页面加载时先进行一次动态填充
+    });
+    </script>
+</head>
+<body>
+    <div id="main" style="border: solid 1px red; width: 962px; height: 542px; margin: auto">
+        <video id="preview" autoplay muted width="960" height="540"></video>
+    </div>
+    <!-- 此处添加表格，动态填充考勤成功后的数据，并且将-->
+    <table>
+      <thead>
+        <tr>
+        <td width="10%">编号</td>
+        <td width="10%">姓名</td>
+        <td width="10%">性别</td>
+        <td width="10%">部门</td>
+        <td width="15%">考勤日期</td>
+        <td width="15%">首次时间</td>
+        <td width="15%">末次时间</td>
+        <td width="15%">上班时长</td>
+        </tr>
+        </thead>
+        <tbody id="check_data">
+          {% for result in results %}
+          <tr>
+            <td>{{result.Users.userid}}</td>
+            <td>{{result.Users.username}}</td>
+            <td>{{result.Users.usersex}}</td>
+            <td>{{result.Users.department}}</td>
+            <td>{{result.Checks.checkdate}}</td>
+            <td>{{result.Checks.checkstart}}</td>
+            <td>{{result.Checks.checkend}}</td>
+            <td>{{result.Checks.hours}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

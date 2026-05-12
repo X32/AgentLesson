@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智慧导游</title>
+    <style>
+        /* 全局样式，浏览器默认样式重置 */
+        html, body {
+		  margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        /* 整体布局容器，设置为弹性布局，列作为主轴 */
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部固定导航栏 */
+        .header {
+            height: 50px;
+            background-color: #1976D2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 弹性项目中间均分空余空间，即左右两边靠边 */
+            position: fixed;  /* 必须设置为固定定位，才能在滚动时保持在顶部 */
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;  /* 确保在其他元素之上 */
+        }
+
+        /* 中间内容区域 - 可滚动 */
+        .content-wrapper {
+            padding-top: 50px;    /* 为顶部导航留出空间 */
+            padding-bottom: 60px; /* 为底部输入框留出空间 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+            border: 1px solid gainsboro;
+            display: flex;
+            flex-direction: column;
+
+        }
+
+        /* 消息气泡样式 */
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .received {
+            background: #e5e5ea;
+        }
+
+        .sent {
+            background: green;
+            color: white;
+            align-self: flex-end; /* 右对齐 */
+        }
+        .sent img {
+            max-width: 90%;
+            margin-bottom: 10px;
+        }
+
+        /* 底部输入区域，同样保持固定定位 */
+        .footer {
+            height: 50px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .input-container {
+            display: flex;
+            height: 43px;
+        }
+
+        /* 输入框样式 */
+        .message-input {
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            padding: 10px 15px;
+            font-size: 16px;
+            outline: none;
+            margin-right: 10px;
+        }
+
+        /* 按钮的样式，此处按钮用Div直接替代，对于响应单击事实无差别 */
+        .send-button {
+            width: 40px;
+            height: 40px;
+            background-color: #1976D2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部固定导航 -->
+        <header class="header">
+            <div><img src="../static/logo.png" style="width: 180px; flex-grow: 5;"/></div>
+            <div>
+                <!-- 控制是否语音播报的功能按钮 -->
+                <img id="switch" src="../static/play.png" style="width: 30px;"/>
+            </div>
+            <div><h2>AI智慧导游&nbsp;</h2></div>
+        </header>
+
+        <!-- 中间可滚动内容 -->
+        <div class="content-wrapper">
+            <div class="content" id="chatbox">
+                <!-- 消息内容会在这里显示 -->
+                <div class="message received">
+                    你好！很高兴能帮助你规划旅行、解答关于旅游景点、路径规划、行程安排、语言翻译以及各国货币与人民币之间的汇率等问题。请问有什么具体的问题或需求吗？我会尽力提供详尽的信息和建议。让我们一起打造一次完美的旅行体验！
+                </div>
+                <!-- 下面几个DIV只是用于预览格式和滚动条情况，后续会删除，交由JS进行动态填充 -->
+                <div class="message sent">
+                    你好！请介绍一下三星堆的历史和文化背景。
+                </div>
+                <div class="message received">
+                    你好！三星堆是中国四川省广汉市发现的一处重要考古遗址，距今约有3000至5000年历史，相当于中国的青铜时代。这个遗址的发现可以追溯到20世纪20年代末，但它的重要性是在1986年随着两个祭祀坑的发现而被世界所瞩目。
+                </div>
+                <div class="message sent">
+                    非常感谢。
+                </div>
+                <div class="message received">
+                    不客气！如果还有其他关于旅游、文化、语言翻译等方面的问题，随时欢迎提问。祝你旅途愉快！🌍✈️🏛️
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部输入框和发送按钮 -->
+        <footer class="footer">
+            <div class="input-container">
+                <input type="text" id="userask" class="message-input"
+placeholder="输入消息...">
+                <!-- 文件上传框，隐藏状态，用于触发图片上传或拍照 -->
+                <input type="file" id="imageInput" style="display: none;">
+                <button class="send-button">问</button>
+                <button class="send-button">图</button>
+                <button class="send-button">译</button>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

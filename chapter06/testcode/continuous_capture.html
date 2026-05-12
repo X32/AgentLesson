@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>对视频帧连续截图</title>
+    <script>
+        const synth = window.speechSynthesis;
+        let captureInterval = null;   // 定义定时器对象
+        let captureCount = 0;         // 定义截图数量
+
+        function doSpeak(content) {
+            let utterance = new SpeechSynthesisUtterance(content);
+            synth.cancel();
+            synth.speak(utterance);
+        }
+
+        // 初始化摄像头，此处不再需要定义MediaRecorder对象，因为
+        async function initCamera() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    width: {ideal: 960},
+                    height: {ideal: 540}
+                }
+            });
+            document.getElementById('preview').srcObject = stream;
+        }
+
+        // 实时将截图渲染到页面中，当达到8张后停止截图
+        function captureImage() {
+            const preview = document.getElementById('preview');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = preview.videoWidth;
+            canvas.height = preview.videoHeight;
+
+            context.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+            const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+            let image = document.createElement("img");
+            image.src = imageUrl;
+            image.style.width = "320px";
+            image.style.height = "180px";
+            image.style.marginLeft = "15px";
+            document.getElementById("screenshot").appendChild(image);
+
+            captureCount++;
+            if (captureCount >= 8) {
+                stopCapture();
+                doSpeak("截图已完成");
+            }
+        }
+
+        // 开始截图，将截图数量清零，并启动定时任务每200毫秒截图一张
+        function startCapture() {
+            document.getElementById("screenshot").innerHTML = '';
+            captureCount = 0;
+            doSpeak("开始截图");
+            captureInterval = setInterval(captureImage, 200);
+        }
+
+        // 停止截图，此时删除定时器
+        function stopCapture() {
+            clearInterval(captureInterval);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initCamera();
+            // 如有需要，也可以自动截图，页面加载后2秒后自动启动
+            // setTimeout(startCapture, 2000);
+        });
+    </script>
+</head>
+<body>
+    <video id="preview" autoplay muted width="640" height="360"></video>
+    <br/>
+    <!-- 手工开始截图 -->
+     <button onclick="startCapture()">截图</button>
+    <div id="screenshot" style="margin-top: 20px"/>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>查询考勤数据</title>
+    <style>
+      table {
+        width: 1000px;
+        margin: auto;
+        border: solid 1px gray;
+        border-spacing: 0px;
+      }
+      thead{
+        font-weight: bold;
+        height: 40px;
+        background-color: lightseagreen;
+      }
+      td {
+        border: solid 1px gray;
+        text-align: center;
+        height: 35px;
+      }
+      select {
+          width: 88px;
+      }
+    </style>
+
+    <script>
+        function doQuery() {
+            let username = document.getElementById("username");
+            let usersex = document.getElementById("usersex");
+            let department = document.getElementById("department");
+            let checkdate = document.getElementById("checkdate");
+
+            // 将查询条件整合为JSON字符串并作为路径参数进行传递
+            data = {username: username.value, usersex: usersex.value,
+                    department: department.value, checkdate: checkdate.value,
+            }
+            location.href = "/check/query/" + JSON.stringify(data);
+        }
+    </script>
+</head>
+<body>
+    <table>
+        <tr>
+        <td width="15%">查询条件</td>
+        <td width="70%">
+            姓名：
+            <select id="username">
+                <!--添加一个空下拉项，以便于清空查询条件-->
+                <option value=""></option>
+                <!--姓名来自于数据表,动态填充到下拉框中-->
+                {% for result in results %}
+                <option value="{{result.Users.username}}">{{result.Users.username}}</option>
+                {% endfor %}
+            </select>
+            &nbsp;&nbsp;性别：
+            <select id="usersex">
+                <option value=""></option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+            </select>
+            &nbsp;&nbsp;部门：
+            <select id="department">
+                <option value=""></option>
+                <!--此处为了简化操作，部门名称直接前端硬编码-->
+                <option value="技术部">技术部</option>
+                <option value="市场部">市场部</option>
+                <option value="销售部">销售部</option>
+                <option value="人事部">人事部</option>
+                <option value="财务部">财务部</option>
+            </select>
+            &nbsp;&nbsp;日期：
+            <input type="text" id="checkdate"/>
+        </td>
+        <td width="15%"><button onclick="doQuery()">查询</button> </td>
+      </tr>
+    </table>
+    <br/>
+    <table>
+    <thead>
+      <tr>
+        <td width="10%">编号</td>
+        <td width="10%">姓名</td>
+        <td width="10%">性别</td>
+        <td width="10%">部门</td>
+        <td width="15%">考勤日期</td>
+        <td width="15%">首次时间</td>
+        <td width="15%">末次时间</td>
+        <td width="15%">上班时长</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td>{{result.Users.userid}}</td>
+        <td>{{result.Users.username}}</td>
+        <td>{{result.Users.usersex}}</td>
+        <td>{{result.Users.department}}</td>
+        <td>{{result.Checks.checkdate}}</td>
+        <td>{{result.Checks.checkstart}}</td>
+        <td>{{result.Checks.checkend}}</td>
+        <td>{{result.Checks.hours}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

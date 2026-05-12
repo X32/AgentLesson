@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fetch基础用法</title>
+    <script>
+        // fetch('http://127.0.0.1:8000/hello')
+        // .then(response => response.text())   // 处理响应并返回正文
+        // .then(data => console.log(data))  // 输出正文
+        // .catch(err => console.log('请求失败', err));  // 异常处理
+
+        // async function getData() {
+        //     let url = 'http://127.0.0.1:8000/hello';
+        //     try {
+        //         let response = await fetch(url);
+        //         return await response.text();
+        //     } catch (error) {
+        //         console.log('请求失败', error);
+        //     }
+        // }
+        // getData().then(data=>console.log(data));
+
+        fetch('http://127.0.0.1:8000/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: "username=woniu&password=123456",
+        })
+        .then(response => response.text())
+        .then(data => console.log(data))
+        .catch(err => console.log('请求失败', err));
+    </script>
+</head>
+<body>
+</body>
+</html>

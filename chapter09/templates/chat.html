@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智慧导游</title>
+    <script src="/static/script.js"></script>
+    <link rel="stylesheet" href="/static/style.css" type="text/css"></link>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部固定导航 -->
+        <header class="header">
+            <div><img src="/static/logo.png" style="width: 180px; flex-grow: 5;"/></div>
+            <div>
+                <!-- 控制是否语音播报的功能按钮 -->
+                <img id="switch" src="/static/play.png" onclick="switchVoice()" style="width: 30px;"/>
+            </div>
+            <div><h2>AI智慧导游&nbsp;</h2></div>
+        </header>
+
+        <!-- 中间可滚动内容 -->
+        <div class="content-wrapper">
+            <div class="content" id="chatbox">
+                <!-- 消息内容会在这里显示 -->
+                <div class="message received">
+                    你好！很高兴能帮助你规划旅行、解答关于旅游景点、路径规划、行程安排、语言翻译以及各国货币与人民币之间的汇率等问题。请问有什么具体的问题或需求吗？我会尽力提供详尽的信息和建议。让我们一起打造一次完美的旅行体验！
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部输入框和发送按钮 -->
+        <footer class="footer">
+            <div class="input-container">
+                <input type="text" id="userask" class="message-input" placeholder="输入消息...">
+                <!-- 文件上传框，隐藏状态，用于触发图片上传或拍照 -->
+                <input type="file" id="imageInput" onchange="uploadImage()" style="display: none;">
+                <button class="send-button" onclick="doAsk()">问</button>
+                <button class="send-button" onclick="addImage()">图</button>
+                <button class="send-button" onclick="doTranslate()">译</button>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

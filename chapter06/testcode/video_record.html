@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频录制与预览</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .video-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        video {
+            width: 100%;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>视频录制与预览</h1>
+
+    <div class="video-container">
+        <h2>实时预览</h2>
+        <video id="preview" autoplay muted></video>
+
+        <h2>录制结果</h2>
+        <video id="recorded" controls></video>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn">开始录制</button>
+        <button id="stopBtn" disabled>停止录制</button>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素
+    const previewVideo = document.getElementById('preview');
+    const recordedVideo = document.getElementById('recorded');
+    const startButton = document.getElementById('startBtn');
+    const stopButton = document.getElementById('stopBtn');
+
+    // 全局变量
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+
+    // 初始化摄像头
+    async function initCamera() {
+        try {
+            // 请求摄像头和麦克风权限
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+
+            // 设置预览视频源
+            previewVideo.srcObject = stream;
+
+            // 启用开始录制按钮
+            startButton.disabled = false;
+
+        } catch (err) {
+            console.error('无法访问摄像头或麦克风:', err);
+            alert('无法访问摄像头或麦克风: ' + err.message);
+        }
+    }
+
+    // 开始录制
+    function startRecording() {
+        // 初始化 recordedChunks 数组
+        recordedChunks = [];
+
+        // 设置 MediaRecorder 选项（可选）
+        // const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+        const options = { mimeType: 'video/mp4;codecs=h264' };
+
+        try {
+            // 创建 MediaRecorder 实例
+            mediaRecorder = new MediaRecorder(stream, options);
+        } catch (err) {
+            // 如果指定的 MIME 类型不支持，尝试使用默认类型
+            console.error('不支持指定的MIME类型，使用默认类型:', err);
+            mediaRecorder = new MediaRecorder(stream);
+        }
+
+        // 处理数据可用事件
+        mediaRecorder.ondataavailable = function(event) {
+            if (event.data && event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        // 录制停止事件
+        mediaRecorder.onstop = function() {
+            // 创建 Blob 对象
+            const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+
+            // 创建URL并设置到录制结果视频元素上
+            const url = URL.createObjectURL(blob);
+            recordedVideo.src = url;
+
+            // 可选：显示下载链接
+            // createDownloadLink(blob);
+        };
+
+        // 开始录制，每秒收集一次数据
+        mediaRecorder.start(1000);
+
+        // 更新按钮状态
+        startButton.disabled = true;
+        stopButton.disabled = false;
+
+        console.log('录制开始...');
+    }
+
+    // 停止录制
+    function stopRecording() {
+        // 如果 mediaRecorder 存在且正在录制
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            console.log('录制停止');
+
+            // 更新按钮状态
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+    }
+
+    // 创建下载链接（可选功能）
+    function createDownloadLink(blob) {
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = 'recorded-video.webm';
+        downloadLink.innerHTML = '下载录制的视频';
+        document.body.appendChild(downloadLink);
+    }
+
+    // 添加按钮事件监听器
+    startButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
+
+    // 页面加载时初始化摄像头
+    initCamera();
+});
+    </script>
+</body>
+</html>

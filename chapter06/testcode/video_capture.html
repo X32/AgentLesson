@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>对视频帧进行截图</title>
+    <script>
+        // 定义开始函数，用于开启摄像头并实时渲染到video元素中
+        async function doStart() {
+            // 先列出所有音频和视频设备
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            // 筛选出视频输入设备
+            videoDevices = devices.filter(device => device.kind === 'videoinput');
+            console.log(videoDevices);  // 找到其中的deviceId并记录下来
+            // 申请摄像头权限并设置视频的尺寸
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: false,   // 截图不需要采集声音，除非需要录制带声音的视频
+                video: {
+                    // deviceId: { exact: 'd9c109f7f262bb1a62bc630028c7598d052fd8a463e2cfa7ed647cda41b733bc' },
+                    width: {ideal: 640},
+                    height: {ideal: 360}
+                }
+            });
+
+            // 将视频流赋值给video元素
+            document.getElementById('preview').srcObject = stream;
+
+            // 由于此处不需要录制音频视频，所以不用实例化MediaRecorder对象
+            /** mediaRecorder = new MediaRecorder(stream, {mimeType: 'video/mp4'});
+            mediaRecorder.start(200); */
+        }
+
+        // 对视频帧进行截图并渲染到img元素上
+        function doCapture() {
+            const preview = document.getElementById('preview');
+
+            // 创建canvas元素并获取其绘图上下文
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // 设置canvas尺寸与视频相同
+            canvas.width = preview.videoWidth;
+            canvas.height = preview.videoHeight;
+
+            // 将视频帧绘制到canvas上，从左上角坐标原点开始，设置绘图区域的大小
+            context.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+            // 获取Canvas上的图像并导出为一个质量为0.9的Base64编码数据
+            // 如果要获取原始二进制数据，则可以使用toBlob()函数完成
+            const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+            // 在screenshot上动态添加一个新的img元素用于显示截图
+            let image = document.createElement("img");
+            image.src = imageUrl;
+            image.style.width = "144px";
+            image.style.height = "81px";
+            image.style.marginLeft = "15px";
+            document.getElementById("screenshot").appendChild(image);
+        }
+
+        // 页面加载完成后自动调用doStart()，也可以响应body的onload事件来调用doStart函数
+        document.addEventListener('DOMContentLoaded', function() {
+            doStart();
+        });
+    </script>
+</head>
+<body>
+    <!--定义video元素用于实时渲染摄像头视频-->
+    <video id="preview" autoplay muted width="640" height="360"></video>
+    <br/>
+    <button onclick="doCapture()">截图</button>
+    <div id="screenshot" style="margin-top: 20px"/>   <!--视频截图显示在该img元素上-->
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>录制音频</title>
+    <script>
+    let mediaRecorder;    // 录音对象
+    let recordedBlobs = [];    // 录音内容
+
+    // 开始录制，获取浏览器权限并保存音频文件数据
+    function startRecording() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream, {
+              mimeType: 'audio/webm',  // 默认音频格式
+              audioBitsPerSecond: 48000,   // 音频文件码率
+          });
+          // 每200毫秒触发该事件并读取该音频数据，也可以将该数据通过WebSocket实时发送
+          mediaRecorder.ondataavailable = function(event) {
+            if (event.data && event.data.size > 0) {
+              recordedBlobs.push(event.data);  // 将音频保存到变量中
+            }
+          };
+
+          mediaRecorder.start(200);   // 每200毫秒触发一次数据，可响应ondataavailable事件
+        })
+        .catch(error => console.error('Error capturing audio:', error));
+    }
+
+    // 停止录音并指定录音文件为audio控制的src
+    function stopRecording() {
+      myaudio = document.getElementById("myaudio");  // 获取到audio元素
+      mediaRecorder.stop();     // 停止录制音频
+      mediaRecorder.onstop = function() {
+      // 或写成这样：mediaRecorder.addEventListener('stop', () => {});
+        const audioBlob = new Blob(recordedBlobs, { type: 'audio/webm' });
+        audioUrl = URL.createObjectURL(audioBlob);  // 将音频数据创建为URL地址
+        console.log(audioUrl);
+        myaudio.src = audioUrl;    // 设置audio控制的src属性为录制的音频文件
+        myaudio.style.display = "block";   // 显示音频控件
+      }
+    }
+    </script>
+</head>
+<body>
+    <button id="record" onclick="startRecording()">开始录音</button>
+    <button id="stop" onclick="stopRecording()">结束录音</button>
+    <br/>
+    <audio autoplay controls id="myaudio" style="display: none"></audio>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线智能客服</title>
+    <script src="/static/script.js"></script>
+    <link rel="stylesheet" href="/static/style.css" type="text/css"></link>
+    <script>
+        // 每次加载页面时，都向服务器请求确认Token是否有效，如果无效或过期则显示未登录状态
+        document.addEventListener("DOMContentLoaded", function () {
+            // 先判断localStorage中存在Token，再发送请求给后端确认Token可用
+            if (localStorage.getItem("token") != null) {
+                fetch("/checklogin", {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({"token": localStorage.getItem("token")})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data["message"] === "Token-OK") {
+                        welcome = document.getElementById("welcome");
+                        welcome.innerHTML = "你好，" + data["username"];
+                        welcome.innerHTML += "&nbsp;&nbsp;" +
+                            "<a href='#' onclick='doLogout()'>退出</a>";
+                    }
+                });
+            }
+            // 以上情况都不满足时，则页面中默认显示未登录状态
+
+            // 使用JavaScript检查或生成Token（时间戳+随机数）并保存到sessionStorage中
+            if (sessionStorage.getItem("user_token") == null) {
+                let userToken = parseInt(Date.now().toString() + Math.random()*100000);
+                sessionStorage.setItem("user_token", userToken);
+            }
+
+            // console.log(localStorage.getItem("token"));
+            // console.log(sessionStorage.getItem("user_token"));
+        });
+    </script>
+</head>
+<body>
+  <div class="menu" style="width: 800px">
+      <div class="logo">蜗牛智能客服</div>
+      <!-- 用户登录框默认不显示，点击登录时才显示 -->
+      <div class="login">
+          用户名：<input type="text" id="username">
+          密码：<input type="password" id="password">
+          &nbsp;&nbsp;<button onclick="doLogin()">登录</button>
+      </div>
+      <div id="welcome">
+          <a href="#" onclick="clickLogin()">点击登录</a>
+      </div>
+  </div>
+
+  <div id="chatbox">
+      <div class="answer-box">您好，欢迎访问蜗牛学苑官网，我是蜗牛学苑的AI智能客服，可以帮助您解答有关于蜗牛学苑培训课程的相关问题。如果需要人工服务请 <a href="#">点击此处</a></div>
+  </div>
+  <div id="bottom">
+    <div style="float: left">
+      <textarea id="question" onkeyup="doEnter(event)" >课程有哪些专业方向？</textarea>
+    </div>
+    <div style="float: right; text-align: left; width: 130px">
+      <button id="qa-button" onclick="doAsk()">智能问答</button> <br/>
+    </div>
+  </div>
+</body>
+</html>

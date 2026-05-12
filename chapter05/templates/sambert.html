@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>前端语音合成</title>
+    <script>
+        function play() {
+            let content = document.getElementById("content").value;
+            fetch('http://127.0.0.1:8000/speech', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({"content": content}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const music = new Audio(data['url']);
+                music.play();
+            })
+            .catch(err => console.log('请求失败', err));
+            }
+    </script>
+</head>
+<body>
+    <input type="text" value="今天天气怎么样，要不要外出游玩？" id="content"><br/>
+    <button onclick="play()">播放语音</button>
+</body>
+</html>

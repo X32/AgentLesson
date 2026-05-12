@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>利用JavaScript对接流式响应</title>
+    <style>
+        #top {
+            width: 400px;
+            height: 300px;
+            border: solid 1px darkgrey;
+            margin: auto;
+        }
+        #chatbox {
+            width: 90%;
+            height: 200px;
+            margin: 20px auto;
+            border: dashed 1px green;
+        }
+        #askbox {
+            width: 90%;
+            height: 50px;
+            margin: auto;
+            text-align: center;
+        }
+    </style>
+    <script>
+        // function doask() {
+        //     let answer = document.getElementById("chatbox");
+        //
+        //     let content = document.getElementById("ask").value;
+        //
+        //     // 利用fetch函数进行请求处理，并且获取流式响应需要异步通信
+        //     fetch("/stream", {
+        //         method: 'POST',
+        //         headers: {'Content-Type': 'application/json'},
+        //         body: JSON.stringify({"content": content}),
+        //     }).then((async result => {
+        //         // 流式响应并非简单文本，所以需要Reader对象进行读取
+        //         const reader = result.body.getReader();
+        //         const textDecoder = new TextDecoder("utf-8");
+        //         while(true){
+        //             const {done, value} = await reader.read();
+        //             // 如果完成了数据流的读取，则退出当前循环
+        //             if(done) {
+        //                 return
+        //             }
+        //             // 获取到流式输出中的原始文本并解析为JSON，进而实现填充
+        //             let chunk = textDecoder.decode(value);
+        //             console.log(chunk);
+        //             // jsonObj = JSON.parse(chunk);
+        //             // answer.innerHTML += jsonObj['content'];
+        //         }
+        //     }));
+        // }
+
+
+        // 兼容所有浏览器的代码
+        function doask() {
+            let answer = document.getElementById("chatbox");
+
+            let content = document.getElementById("ask").value;
+
+            // 利用fetch函数进行请求处理，并且获取流式响应需要异步通信
+            fetch("/stream", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({"content": content}),
+            }).then((async result => {
+                // 流式响应并非简单文本，所以需要Reader对象进行读取
+                const reader = result.body.getReader();
+                const textDecoder = new TextDecoder("utf-8");
+                while(true){
+                    const {done, value} = await reader.read();
+                    // 如果完成了数据流的读取，则退出当前循环
+                    if(done) {
+                        return
+                    }
+                    // 以\n为分隔符将响应内容分隔为数组，并遍历其中的每一项，将其解析为JSON
+                    let jsonList = textDecoder.decode(value).split("\n");
+                    // 注意：由于每一条后端响应均带有一个\n，所以split时最后一条为空
+                    // 应该排除掉，所以循环的结束条件为：i<jsonList.length-1
+                    for (let i=0; i<jsonList.length-1; i++) {
+                        jsonObj = JSON.parse(jsonList[i]);
+                        answer.innerHTML += jsonObj['content'];
+                    }
+                }
+            }));
+        }
+    </script>
+</head>
+<body>
+    <div id="top">
+        <div id="chatbox"></div>
+        <div id="askbox">
+            <input type="text" id="ask" value="你好，你是谁？"/>
+            <button onclick="doask()">提交</button>
+        </div>
+    </div>
+
+</body>
+</html>
