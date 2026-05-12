@@ -5,34 +5,31 @@
     <title>每日新闻摘要</title>
     <style>
         #menu {
-            width: 805px;
+            width: 960px;
             min-height: 80px;
             border-bottom: solid 1px lightskyblue;
             margin: 10px auto 30px auto;
             text-align: center;
-            line-height: 80px;
-            padding-left: 20px;
-            padding-right: 20px;
+            line-height: 40px;
+            padding: 0 20px;
+            overflow: hidden;
         }
         #menu #logo {
             width: 200px;
-            height: 80px;
+            line-height: 80px;
             float: left;
             text-align: left;
-            line-height: 80px;
             font-size: 26px;
-            /*border: solid 1px red;*/
         }
         #menu #category {
-            width: 600px;
-            height: 80px;
+            width: auto;
             float: right;
             text-align: right;
-            line-height: 80px;
-            /*border: solid 1px red;*/
+            line-height: 40px;
+            padding: 10px 0;
         }
         .news {
-            width: 805px;
+            width: 960px;
             min-height: 150px;
             border: solid 1px lightgrey;
             margin: 30px auto;
@@ -69,7 +66,7 @@
             font-size: 15px;
         }
         #history {
-            width: 785px;
+            width: 940px;
             min-height: 30px;
             border: solid 1px lightgrey;
             margin: 30px auto;
@@ -95,13 +92,14 @@
         <div id="logo">每日新闻摘要</div>
         <div id="category">
             <span style="margin-right: 50px">{{today}}</span>
-            <!--此处分类菜单的链接地址需要更新-->
             <a href="/{{today}}/hot">今日要闻</a>&nbsp;&nbsp;&nbsp;
             <a href="/{{today}}/china">国内新闻</a>&nbsp;&nbsp;&nbsp;
             <a href="/{{today}}/world">国际新闻</a>&nbsp;&nbsp;&nbsp;
             <a href="/{{today}}/mil">军事新闻</a>&nbsp;&nbsp;&nbsp;
-            <a href="/{{today}}/finance">财经科技</a>&nbsp;&nbsp;&nbsp;
-            <a href="/{{today}}/ent">娱乐体育</a>
+            <a href="/{{today}}/finance">财经新闻</a>&nbsp;&nbsp;&nbsp;
+            <a href="/{{today}}/tech">科技新闻</a>&nbsp;&nbsp;&nbsp;
+            <a href="/{{today}}/ent">娱乐新闻</a>&nbsp;&nbsp;&nbsp;
+            <a href="/{{today}}/society">社会新闻</a>
         </div>
     </div>
 

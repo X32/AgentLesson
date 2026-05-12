@@ -1,10 +1,13 @@
-import time
+import time, os
 from sqlmodel import Field, SQLModel, Session, select, between
 from typing import Optional
 from datetime import datetime
 from sqlmodel import create_engine
+from dotenv import load_dotenv
+load_dotenv()
 
-engine = create_engine("mysql+pymysql://qiang:123456@127.0.0.1:3306/dailynews")
+DB_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+engine = create_engine(DB_URL)
 
 #　创建SQLModel关系映射类
 class News(SQLModel, table=True,):

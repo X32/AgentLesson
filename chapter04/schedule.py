@@ -1,5 +1,5 @@
 import time
-from crawler import get_hots, get_mils, get_news
+from crawler import get_hots, get_mils, get_news, get_tech_news
 from summarize import get_and_update
 from datetime import datetime
 
@@ -11,6 +11,7 @@ if __name__ == '__main__':
                 get_hots()
                 get_mils()
                 get_news()
+                get_tech_news()
                 get_and_update()
                 print("更新新闻完成", {now})
         else:

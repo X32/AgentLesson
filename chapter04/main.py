@@ -42,4 +42,4 @@ def query_news_dc(request: Request, date: str, category: str):
     return templates.TemplateResponse(request=request, name="news.html", context={"news_list": news_list, "date_list": date_list, "today": today})
 
 if __name__ == '__main__':
-    uvicorn.run(app)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

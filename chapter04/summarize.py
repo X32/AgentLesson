@@ -6,6 +6,10 @@ from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
+def get_llm_client():
+    return OpenAI(api_key=os.getenv("LLM_API_KEY"),
+                  base_url=os.getenv("LLM_BASE_URL"))
+
 # 爬取并解析HTML获取新闻正文内容
 def get_content(link):
     resp = requests.get(link)
@@ -23,13 +27,12 @@ def get_content(link):
 def summarize(content):
     if len(content) > 100:
         message = {"role": "user", "content": f"以下内容来自于新浪新闻，属于公开信息，不存在信息敏感或政治敏感问题：\n{content}\n请对以上新闻内容进行摘要总结，字数控制在100字以内。"}
-        client = OpenAI(api_key=os.getenv("DeepSeek_API_Key"),
-                        base_url="https://api.deepseek.com")
+        client = get_llm_client()
 
         completion = client.chat.completions.create(
-            model="deepseek-chat",
+            model=os.getenv("LLM_MODEL", "deepseek-chat"),
             messages=[message],
-            stream=False    # 直接将摘要更新到数据库，所以不需要流式响应
+            stream=False
         )
         return completion.choices[0].message.content
     else:
@@ -41,6 +44,8 @@ def get_and_update():
         today = time.strftime("%Y-%m-%d 00:00:00")
         news = select(News.id, News.hyperlink).where(News.summary==None).where(News.createtime>=today)
         results = session.execute(news).mappings().all()
+        #打印新闻条数
+        print(f"共查询到 {len(results)} 条新闻, 开始生成摘要...")
         for row in results:
             content = get_content(row['hyperlink'])
             time.sleep(2)   # 爬取一条暂停2秒，防止过快访问导致连接异常
