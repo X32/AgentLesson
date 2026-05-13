@@ -6,7 +6,7 @@ from sqlmodel import create_engine
 from dotenv import load_dotenv
 load_dotenv()
 
-DB_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+DB_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}?charset=utf8mb4"
 engine = create_engine(DB_URL)
 
 #　创建SQLModel关系映射类
@@ -21,11 +21,11 @@ class News(SQLModel, table=True,):
 
 def get_news_by_dc(date=None, category='hot'):
     if date is None:
-        starttime = time.strftime("%Y-%m-%d 00:00:00")
-        endtime = time.strftime("%Y-%m-%d 23:59:59")
+        starttime = "00:00:00"
+        endtime = "23:59:59"
     else:
-        starttime = time.strftime(f"{date} 00:00:00")
-        endtime = time.strftime(f"{date} 23:59:59")
+        starttime = f"{date} 00:00:00"
+        endtime = f"{date} 23:59:59"
 
     with Session(engine) as session:
         sql = select(News).where(News.category==category).where(between(News.createtime, starttime, endtime)).where(News.summary!="")

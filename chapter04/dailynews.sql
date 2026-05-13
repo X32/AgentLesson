@@ -25,7 +25,7 @@ CREATE TABLE `news` (
   `headline` varchar(255) DEFAULT NULL,
   `hyperlink` varchar(255) DEFAULT NULL,
   `content` tinytext DEFAULT NULL,
-  `summary` varchar(255) DEFAULT NULL,
+  `summary` text DEFAULT NULL,
   `createtime` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=253 DEFAULT CHARSET=utf8mb4;

@@ -5,12 +5,15 @@ from datetime import datetime
 from news import engine, News
 
 url = "https://news.sina.com.cn/"
-resp = requests.get(url)
-resp.encoding = 'utf-8'
-html = BeautifulSoup(resp.text, 'lxml')
+
+def _fetch_sina_html():
+    resp = requests.get(url)
+    resp.encoding = 'utf-8'
+    return BeautifulSoup(resp.text, 'lxml')
 
 # 获取今日要闻的标题与超链接
 def get_hots():
+    html = _fetch_sina_html()
     daily_hots = html.find(name="div", id="syncad_1", class_="ct_t_01")
     for hots in daily_hots.find_all("h1", attrs={"data-client": "headline"}):
         links = hots.find_all("a", class_="linkNewsTopBold")
@@ -23,6 +26,7 @@ def get_hots():
 
 # 获取军事新闻标题与超链接
 def get_mils():
+    html = _fetch_sina_html()
     mil_news = html.find(name="div", id="blk_08_cont01", attrs={"data-sudaclick":"mil_1"})
     for line in mil_news.find_all("li"):
         link = line.find("a")
@@ -34,6 +38,7 @@ def get_mils():
 
 # 获取国内国际科技娱乐军事等类别新闻
 def get_news(id, type):
+    html = _fetch_sina_html()
     attrs = {"class": "list_14_noBg"}
     if type:
         attrs["data-client"] = type
@@ -118,12 +123,12 @@ def get_tech_news():
         print(f"获取科技新闻页面失败: {e}")
 
 if __name__ == '__main__':
-    # get_hots()                                   # 今日要闻 (hot)
-    # get_mils()                                   # 军事新闻 (mil)
-    # get_news("blk_gnxw_011", "p_china")          # 国内新闻 (china)
-    # get_news("blk_gjxw_011", "p_world")          # 国际新闻 (world)
-    # get_news("blk_cjkjqcfc_011", "p_finance")    # 财经新闻 (finance)
-    # get_news("blk_lctycp_011", "p_ent")          # 娱乐新闻 (ent)
+    get_hots()                                   # 今日要闻 (hot)
+    get_mils()                                   # 军事新闻 (mil)
+    get_news("blk_gnxw_011", "p_china")          # 国内新闻 (china)
+    get_news("blk_gjxw_011", "p_world")          # 国际新闻 (world)
+    get_news("blk_cjkjqcfc_011", "p_finance")    # 财经新闻 (finance)
+    get_news("blk_lctycp_011", "p_ent")          # 娱乐新闻 (ent)
     # get_news("blk_kjxwsjxjbjb_011", "p_tech")   # 科技新闻 (tech)
-    # get_news("blk_sh_011", "p_society")          # 社会新闻 (society)
+    get_news("blk_sh_011", "p_society")          # 社会新闻 (society)
     get_tech_news()                                 # 科技频道新闻 (tech)

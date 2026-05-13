@@ -28,16 +28,18 @@ print('MySQL is ready!')
     sleep $RETRY_INTERVAL
 done
 
-echo "MySQL is ready! Starting services..."
-
 python schedule.py &
 SCHEDULER_PID=$!
 
 python -c "import uvicorn; uvicorn.run('main:app', host='0.0.0.0', port=8000)" &
 WEB_PID=$!
 
-wait -n $SCHEDULER_PID $WEB_PID
+cleanup() {
+    echo "Shutting down..."
+    kill $SCHEDULER_PID $WEB_PID 2>/dev/null
+    wait
+    exit 0
+}
+trap cleanup SIGTERM SIGINT
 
-echo "A process exited unexpectedly. Shutting down..."
-kill $SCHEDULER_PID $WEB_PID 2>/dev/null
-exit 1
+wait

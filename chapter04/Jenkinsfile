@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+
+    environment {
+        // Docker 镜像配置
+        IMAGE_NAME = 'dailynews-app'
+        IMAGE_TAG = "${env.BRANCH_NAME ?: 'dev'}-${env.BUILD_NUMBER}"
+        DOCKER_REGISTRY = '' // 留空表示本地存储，可配置为 Harbor/阿里云等
+        // 部署服务器配置（通过 Jenkins 凭证管理）
+        DEPLOY_HOST = '127.0.0.1'
+        DEPLOY_PORT = '22'
+        DEPLOY_USER = 'root'
+        DEPLOY_PATH = '/opt/dailynews'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('代码检出') {
+            steps {
+                checkout scm
+                echo "分支: ${env.GIT_BRANCH}, 提交: ${env.GIT_COMMIT}"
+            }
+        }
+
+        stage('代码检查') {
+            steps {
+                container('python') {
+                    sh '''
+                        pip install flake8 pylint
+                        flake8 *.py --max-line-length=120 --exclude=__pycache__ || true
+                        pylint *.py --disable=C0114,C0115,C0116,C0301,R0903 --errors-only || true
+                    '''
+                }
+            }
+        }
+
+        stage('运行测试') {
+            steps {
+                container('python') {
+                    sh '''
+                        pip install -r requirements.txt
+                        python test_crawler.py || true
+                        python test_llm.py || true
+                    '''
+                }
+            }
+        }
+
+        stage('构建 Docker 镜像') {
+            steps {
+                sh """
+                    docker compose build app
+                    docker tag chapter04-app:latest ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('推送镜像') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh """
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    // docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    // docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                """
+            }
+        }
+
+        stage('部署到服务器') {
+            steps {
+                script {
+                    // 方案A：SSH 远程部署（适用于外部服务器）
+                    // sh """
+                    //     scp docker-compose.yml .env .env ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+                    //     ssh ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH} && docker compose down && docker compose up -d"
+                    // """
+
+                    // 方案B：本地部署（Jenkins 直接部署）
+                    sh "docker compose down && docker compose up -d"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "构建结果: ${currentBuild.currentResult}"
+        }
+        success {
+            echo "流水线执行成功！"
+        }
+        failure {
+            echo "流水线执行失败！"
+        }
+    }
+}
